@@ -1,0 +1,20 @@
+version: 1
+backend:
+  phases:
+    preBuild:
+      commands:
+        - echo "Installing dependencies..."
+    build:
+      commands:
+        - npm ci --only=production
+        - echo "Backend build completed"
+    postBuild:
+      commands:
+        - echo "Backend post-build completed"
+  artifacts:
+    baseDirectory: /
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - node_modules/**/* 
