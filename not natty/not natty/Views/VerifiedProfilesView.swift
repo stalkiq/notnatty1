@@ -142,55 +142,55 @@ struct VerifiedProfileCard: View {
         Button(action: {
             showProfileDetail = true
         }) {
-            VStack(alignment: .leading, spacing: 12) {
-                // Header
-                HStack(spacing: 12) {
-                    // Avatar
+        VStack(alignment: .leading, spacing: 12) {
+            // Header
+            HStack(spacing: 12) {
+                // Avatar
                     Image(systemName: "person.circle.fill")
                         .font(.system(size: 50))
                         .foregroundColor(.orange)
-                    
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack {
-                            Text(profile.name)
-                                .font(.headline)
-                                .fontWeight(.bold)
-                            
-                            Image(systemName: "checkmark.seal.fill")
-                                .foregroundColor(.blue)
-                                .font(.caption)
-                        }
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text(profile.name)
+                            .font(.headline)
+                            .fontWeight(.bold)
                         
-                        Text("@\(profile.username)")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                        
-                        Text(profile.category.displayName)
+                        Image(systemName: "checkmark.seal.fill")
+                            .foregroundColor(.blue)
                             .font(.caption)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 2)
-                            .background(Color(profile.category.color).opacity(0.2))
-                            .foregroundColor(Color(profile.category.color))
-                            .cornerRadius(8)
                     }
                     
-                    Spacer()
+                    Text("@\(profile.username)")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
                     
-                    // Follow Button
-                    Button(action: {
-                        isFollowing.toggle()
-                    }) {
-                        Text(isFollowing ? "Following" : "Follow")
-                            .font(.caption)
-                            .fontWeight(.medium)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 6)
-                            .background(isFollowing ? Color(.systemGray5) : Color.orange)
-                            .foregroundColor(isFollowing ? .primary : .white)
-                            .cornerRadius(16)
-                    }
-                    .buttonStyle(PlainButtonStyle())
+                    Text(profile.category.displayName)
+                        .font(.caption)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 2)
+                        .background(profile.category.color.opacity(0.2))
+                        .foregroundColor(profile.category.color)
+                        .cornerRadius(8)
                 }
+                
+                Spacer()
+                
+                // Follow Button
+                Button(action: {
+                    isFollowing.toggle()
+                }) {
+                    Text(isFollowing ? "Following" : "Follow")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 6)
+                        .background(isFollowing ? Color(.systemGray5) : Color.orange)
+                        .foregroundColor(isFollowing ? .primary : .white)
+                        .cornerRadius(16)
+                }
+                    .buttonStyle(PlainButtonStyle())
+            }
             
             // Bio
             if !profile.bio.isEmpty {
@@ -207,10 +207,10 @@ struct VerifiedProfileCard: View {
                 VerifiedStatItem(title: "Posts", value: formatNumber(profile.posts))
             }
             
-            // Current Cycle Info
+            // Current Program Info
             if let currentCycle = profile.currentCycle {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Current Cycle")
+                    Text("Current Program")
                         .font(.subheadline)
                         .fontWeight(.medium)
                     
@@ -259,7 +259,7 @@ struct VerifiedProfileCard: View {
                     }
                 }
             }
-            }
+        }
         }
         .buttonStyle(PlainButtonStyle())
         .padding()
@@ -314,8 +314,8 @@ struct VerifiedPostPreviewCard: View {
                     .font(.caption2)
                     .padding(.horizontal, 4)
                     .padding(.vertical, 2)
-                    .background(Color(post.type.color).opacity(0.2))
-                    .foregroundColor(Color(post.type.color))
+                    .background(post.type.tintColor.opacity(0.2))
+                    .foregroundColor(post.type.tintColor)
                     .cornerRadius(4)
                 
                 Spacer()
@@ -457,12 +457,12 @@ private var sampleVerifiedProfiles: [VerifiedProfile] {
             ),
             recentPosts: [
                 PostPreview(
-                    content: "Week 8 progress update. Feeling amazing on this cycle!",
+                    content: "Week 8 progress update. Feeling amazing on this program!",
                     type: .progress,
                     createdAt: Date().addingTimeInterval(-3600)
                 ),
                 PostPreview(
-                    content: "Just finished my Test E injection. 250mg going strong!",
+                    content: "Just finished my creatine dose. 5g daily going strong!",
                     type: .injection,
                     createdAt: Date().addingTimeInterval(-7200)
                 )
@@ -498,10 +498,10 @@ private var sampleVerifiedProfiles: [VerifiedProfile] {
             following: 1500,
             posts: 2156,
             currentCycle: CurrentCycle(
-                name: "Bulking Cycle",
+                name: "Bulking Program",
                 currentWeek: 4,
                 totalWeeks: 16,
-                compounds: ["Testosterone", "Deca", "Dianabol"],
+                compounds: ["Creatine", "Whey Protein", "Fish Oil"],
                 totalDosage: 1200
             ),
             recentPosts: [
@@ -614,13 +614,13 @@ struct VerifiedProfileDetailView: View {
                     }
                     .padding(.vertical)
                     
-                    // Current Cycle Section
+                    // Current Program Section
                     if let currentCycle = profile.currentCycle {
                         VStack(alignment: .leading, spacing: 16) {
                             HStack {
                                 Image(systemName: "chart.line.uptrend.xyaxis")
                                     .foregroundColor(.orange)
-                                Text("Current Cycle")
+                                Text("Current Program")
                                     .font(.headline)
                                     .fontWeight(.medium)
                                 Spacer()
@@ -700,8 +700,8 @@ struct VerifiedProfileDetailView: View {
                                                 .font(.caption)
                                                 .padding(.horizontal, 8)
                                                 .padding(.vertical, 4)
-                                                .background(Color(post.type.color).opacity(0.2))
-                                                .foregroundColor(Color(post.type.color))
+                                                .background(post.type.tintColor.opacity(0.2))
+                                                .foregroundColor(post.type.tintColor)
                                                 .cornerRadius(8)
                                             
                                             Spacer()
@@ -733,8 +733,8 @@ struct VerifiedProfileDetailView: View {
                         
                         Text("Verified on \(verificationDateString)")
                             .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
+                    .foregroundColor(.secondary)
+            }
                     .padding()
                     .background(Color(.systemGray6))
                     .cornerRadius(12)

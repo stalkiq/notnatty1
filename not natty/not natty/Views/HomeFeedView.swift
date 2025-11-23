@@ -31,27 +31,14 @@ struct HomeFeedView: View {
                 .padding(.horizontal)
                 .padding(.top, 10)
                 
-                // Filter Bar
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
-                        FilterChip(title: "All", isSelected: selectedFilter == nil) {
-                            selectedFilter = nil
-                        }
-                        
-                        ForEach(Post.PostType.allCases, id: \.self) { postType in
-                            FilterChip(
-                                title: postType.displayName,
-                                isSelected: selectedFilter == postType,
-                                icon: postType.icon,
-                                color: postType.color
-                            ) {
-                                selectedFilter = postType
-                            }
-                        }
-                    }
-                    .padding(.horizontal)
+                // Personal feed header
+                HStack {
+                    Text("Your Journal")
+                        .font(.headline)
+                    Spacer()
                 }
-                .padding(.vertical, 10)
+                .padding(.horizontal)
+                .padding(.vertical, 8)
                 .background(themeManager.backgroundColor)
                 
                 // Posts List
@@ -83,11 +70,9 @@ struct HomeFeedView: View {
     }
     
     private var filteredPosts: [Post] {
-        if let filter = selectedFilter {
-            return postsManager.posts.filter { $0.postType == filter }
-        } else {
-            return postsManager.posts
-        }
+        let base = postsManager.posts
+        let byType = selectedFilter == nil ? base : base.filter { $0.postType == selectedFilter }
+        return byType
     }
 }
 
@@ -105,6 +90,7 @@ struct FilterChip: View {
                     Image(systemName: icon)
                         .font(.caption)
                 }
+                
                 Text(title)
                     .font(.caption)
                     .fontWeight(.medium)
@@ -163,18 +149,6 @@ struct PostCard: View {
                         Text(timeAgoString(from: post.createdAt))
                             .font(.caption)
                             .foregroundColor(.secondary)
-                        
-                        Text("•")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        
-                        HStack(spacing: 4) {
-                            Image(systemName: post.privacyLevel.icon)
-                                .font(.caption)
-                            Text(post.privacyLevel.displayName)
-                                .font(.caption)
-                        }
-                        .foregroundColor(.secondary)
                     }
                 }
                 
@@ -190,8 +164,8 @@ struct PostCard: View {
                 }
                 .padding(.horizontal, 8)
                 .padding(.vertical, 4)
-                .background(Color(post.postType.color).opacity(0.2))
-                .foregroundColor(Color(post.postType.color))
+                .background(post.postType.tintColor.opacity(0.2))
+                .foregroundColor(post.postType.tintColor)
                 .cornerRadius(8)
             }
             
@@ -217,16 +191,29 @@ struct PostCard: View {
                 }
             }
             
-            // Media (placeholder for future implementation)
+            // Media (render local file URLs if present)
             if !post.mediaURLs.isEmpty {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(.systemGray5))
-                    .frame(height: 200)
-                    .overlay(
-                        Image(systemName: "photo")
-                            .font(.largeTitle)
-                            .foregroundColor(.secondary)
-                    )
+                VStack(alignment: .leading, spacing: 8) {
+                    ForEach(post.mediaURLs, id: \.self) { urlString in
+                        if let url = URL(string: urlString), url.isFileURL, let data = try? Data(contentsOf: url), let uiimg = UIImage(data: data) {
+                            Image(uiImage: uiimg)
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                                .frame(maxWidth: .infinity, minHeight: 180)
+                                .clipped()
+                                .cornerRadius(12)
+                        } else {
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color(.systemGray5))
+                                .frame(height: 200)
+                                .overlay(
+                                    Image(systemName: "photo")
+                                        .font(.largeTitle)
+                                        .foregroundColor(.secondary)
+                                )
+                        }
+                    }
+                }
             }
             
             // Engagement Metrics
@@ -382,33 +369,109 @@ struct CommentsView: View {
     }
     
     private func loadComments() {
-        Task {
-            do {
-                comments = try await APIService.shared.getComments(postId: post.id)
-            } catch {
-                print("Failed to load comments: \(error)")
-                // Fallback to empty array if API fails
-                comments = []
-            }
-        }
-    }
-    
-    private func postComment() {
-        guard !newComment.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
-        
-        let commentContent = newComment
-        newComment = "" // Clear input immediately for better UX
-        
-        Task {
-            do {
-                let newComment = try await APIService.shared.addComment(postId: post.id, content: commentContent)
-                comments.insert(newComment, at: 0)
-            } catch {
-                print("Failed to post comment: \(error)")
-                // Restore the comment text if posting failed
-                newComment = commentContent
-            }
-        }
+        // TODO: Load actual comments from backend
+        // For now, create sample comments
+        comments = [
+            Comment(
+                id: "1",
+                userId: "user1",
+                postId: post.id,
+                parentCommentId: nil,
+                content: "Great progress! Keep it up 💪",
+                mediaURL: nil,
+                isDeleted: false,
+                createdAt: Date().addingTimeInterval(-3600),
+                updatedAt: Date().addingTimeInterval(-3600),
+                user: User(
+                    id: "user1",
+                    email: "fitness_guru@example.com",
+                    username: "fitness_guru",
+                    fullName: "Fitness Guru",
+                    avatarURL: nil,
+                    bio: nil,
+                    heightCm: nil,
+                    weightKg: nil,
+                    dateOfBirth: nil,
+                    verificationStatus: .verified,
+                    emailVerified: true,
+                    profileData: [:],
+                    settings: User.UserSettings(
+                        privacy: .init(profileVisibility: "public", cycleVisibility: "followers", postVisibility: "public"),
+                        notifications: .init(newFollowers: true, likes: true, comments: true, cycleReminders: true),
+                        units: .init(weight: "kg", dosage: "mg", height: "cm")
+                    ),
+                    isActive: true,
+                    createdAt: Date(),
+                    updatedAt: Date()
+                )
+            ),
+            Comment(
+                id: "2",
+                userId: "user2",
+                postId: post.id,
+                parentCommentId: nil,
+                content: "What's your current dosage?",
+                mediaURL: nil,
+                isDeleted: false,
+                createdAt: Date().addingTimeInterval(-1800),
+                updatedAt: Date().addingTimeInterval(-1800),
+                user: User(
+                    id: "user2",
+                    email: "cycle_tracker@example.com",
+                    username: "cycle_tracker",
+                    fullName: "Cycle Tracker",
+                    avatarURL: nil,
+                    bio: nil,
+                    heightCm: nil,
+                    weightKg: nil,
+                    dateOfBirth: nil,
+                    verificationStatus: .unverified,
+                    emailVerified: false,
+                    profileData: [:],
+                    settings: User.UserSettings(
+                        privacy: .init(profileVisibility: "public", cycleVisibility: "followers", postVisibility: "public"),
+                        notifications: .init(newFollowers: true, likes: true, comments: true, cycleReminders: true),
+                        units: .init(weight: "kg", dosage: "mg", height: "cm")
+                    ),
+                    isActive: true,
+                    createdAt: Date(),
+                    updatedAt: Date()
+                )
+            ),
+            Comment(
+                id: "3",
+                userId: "user3",
+                postId: post.id,
+                parentCommentId: nil,
+                content: "Looking solid! How long have you been on this cycle?",
+                mediaURL: nil,
+                isDeleted: false,
+                createdAt: Date().addingTimeInterval(-900),
+                updatedAt: Date().addingTimeInterval(-900),
+                user: User(
+                    id: "user3",
+                    email: "gym_bro@example.com",
+                    username: "gym_bro",
+                    fullName: "Gym Bro",
+                    avatarURL: nil,
+                    bio: nil,
+                    heightCm: nil,
+                    weightKg: nil,
+                    dateOfBirth: nil,
+                    verificationStatus: .unverified,
+                    emailVerified: false,
+                    profileData: [:],
+                    settings: User.UserSettings(
+                        privacy: .init(profileVisibility: "public", cycleVisibility: "followers", postVisibility: "public"),
+                        notifications: .init(newFollowers: true, likes: true, comments: true, cycleReminders: true),
+                        units: .init(weight: "kg", dosage: "mg", height: "cm")
+                    ),
+                    isActive: true,
+                    createdAt: Date(),
+                    updatedAt: Date()
+                )
+            )
+        ]
     }
     
     private func postComment() {

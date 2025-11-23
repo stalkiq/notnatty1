@@ -26,9 +26,9 @@ class CyclesManager: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
     
-    private var authManager: AuthManager?
+    private var authManager: (any ObservableObject)?
     
-    func setAuthManager(_ authManager: AuthManager) {
+    func setAuthManager(_ authManager: any ObservableObject) {
         self.authManager = authManager
     }
     
@@ -46,7 +46,12 @@ class CyclesManager: ObservableObject {
             compounds = sampleCompounds
             
         } catch {
-            errorMessage = "Failed to load cycles: \(error.localizedDescription)"
+            // Dev/offline fallback so UI has content only if empty
+            if cycles.isEmpty { cycles = sampleCycles }
+            if injections.isEmpty { injections = sampleInjections }
+            if sideEffects.isEmpty { sideEffects = sampleSideEffects }
+            compounds = sampleCompounds
+            errorMessage = "Loaded local data (offline)."
         }
         
         isLoading = false
@@ -59,17 +64,30 @@ class CyclesManager: ObservableObject {
         do {
             let newCycle = try await APIService.shared.createCycle(
                 name: name,
-                description: nil,
                 startDate: startDate,
-                endDate: nil,
                 goals: goals,
-                notes: notes
+                compounds: compounds
             )
             
             cycles.append(newCycle)
             
         } catch {
-            errorMessage = "Failed to create cycle: \(error.localizedDescription)"
+            // Offline/local fallback: create a local cycle so UI updates immediately
+            let localCycle = Cycle(
+                id: UUID().uuidString,
+                userId: "current_user_id",
+                name: name,
+                startDate: startDate,
+                endDate: nil,
+                goals: goals,
+                compounds: compounds,
+                notes: notes,
+                status: .active,
+                createdAt: Date(),
+                updatedAt: Date()
+            )
+            cycles.append(localCycle)
+            errorMessage = "Created local cycle (offline)."
         }
         
         isLoading = false
@@ -80,15 +98,12 @@ class CyclesManager: ObservableObject {
         errorMessage = nil
         
         do {
-            // For now, use a placeholder compound ID - in a real app, you'd look up the compound by name
-            let compoundId = "placeholder-compound-id"
-            
-            let newInjection = try await APIService.shared.createInjection(
-                compoundId: compoundId,
-                dosage: dosageMg,
-                injectionSite: injectionSite?.rawValue ?? "Not specified",
-                injectedAt: Date(),
+            let newInjection = try await APIService.shared.logInjection(
                 cycleId: cycleId,
+                compoundName: compoundName,
+                dosageMg: dosageMg,
+                injectionSite: injectionSite,
+                injectionMethod: injectionMethod,
                 notes: notes
             )
             
@@ -106,16 +121,10 @@ class CyclesManager: ObservableObject {
         errorMessage = nil
         
         do {
-            let newSideEffect = try await APIService.shared.createSideEffect(
+            let newSideEffect = try await APIService.shared.logSideEffect(
+                cycleId: cycleId,
                 symptoms: symptoms,
                 severity: severity,
-                recordedAt: Date(),
-                cycleId: cycleId,
-                bloodPressureSystolic: bloodPressureSystolic,
-                bloodPressureDiastolic: bloodPressureDiastolic,
-                moodRating: moodRating,
-                libidoRating: libidoRating,
-                acneSeverity: acneSeverity,
                 notes: notes
             )
             
@@ -131,113 +140,34 @@ class CyclesManager: ObservableObject {
     // MARK: - Sample Data
     
     private var sampleCycles: [Cycle] {
-        [
-            Cycle(
-                id: "1",
-                userId: "current_user_id",
-                name: "Test E + Tren Cycle",
-                startDate: Date().addingTimeInterval(-30 * 24 * 3600), // 30 days ago
-                endDate: nil,
-                goals: ["Muscle Gain", "Strength", "Fat Loss"],
-                compounds: [],
-                notes: "First time running Tren. Starting conservative.",
-                status: .active,
-                createdAt: Date().addingTimeInterval(-30 * 24 * 3600),
-                updatedAt: Date().addingTimeInterval(-30 * 24 * 3600)
-            )
-        ]
+        []
     }
     
     private var sampleInjections: [Injection] {
-        [
-            Injection(
-                id: "1",
-                userId: "current_user_id",
-                cycleId: "1",
-                compoundId: nil,
-                compoundName: "Testosterone Enanthate",
-                dosageMg: 250.0,
-                injectionSite: .glute,
-                injectionMethod: .im,
-                needleGauge: 25,
-                needleLengthMm: 25,
-                notes: "Smooth injection, no issues",
-                injectedAt: Date().addingTimeInterval(-2 * 24 * 3600), // 2 days ago
-                createdAt: Date().addingTimeInterval(-2 * 24 * 3600)
-            ),
-            Injection(
-                id: "2",
-                userId: "current_user_id",
-                cycleId: "1",
-                compoundId: nil,
-                compoundName: "Trenbolone Acetate",
-                dosageMg: 200.0,
-                injectionSite: .quad,
-                injectionMethod: .im,
-                needleGauge: 25,
-                needleLengthMm: 25,
-                notes: "Slight pip, but manageable",
-                injectedAt: Date().addingTimeInterval(-1 * 24 * 3600), // 1 day ago
-                createdAt: Date().addingTimeInterval(-1 * 24 * 3600)
-            )
-        ]
+        []
     }
     
     private var sampleSideEffects: [SideEffect] {
-        [
-            SideEffect(
-                id: "1",
-                userId: "current_user_id",
-                cycleId: "1",
-                symptoms: ["Acne", "Increased sweating"],
-                severity: 3,
-                bloodPressureSystolic: 140,
-                bloodPressureDiastolic: 85,
-                moodRating: 8,
-                libidoRating: 9,
-                acneSeverity: 4,
-                notes: "Acne mostly on back and shoulders. Mood is great!",
-                recordedAt: Date().addingTimeInterval(-1 * 24 * 3600), // 1 day ago
-                createdAt: Date().addingTimeInterval(-1 * 24 * 3600)
-            )
-        ]
+        []
     }
     
     private var sampleCompounds: [Compound] {
         [
             Compound(
                 id: "1",
-                name: "Testosterone Enanthate",
-                category: .testosterone,
-                halfLifeHours: 168, // 7 days
-                description: "Long-acting testosterone ester",
+                name: "Creatine Monohydrate",
+                category: .other,
+                halfLifeHours: nil,
+                description: "Supports ATP regeneration for strength and power",
                 isVerified: true,
                 createdAt: Date()
             ),
             Compound(
                 id: "2",
-                name: "Trenbolone Acetate",
-                category: .anabolic,
-                halfLifeHours: 72, // 3 days
-                description: "Potent anabolic steroid",
-                isVerified: true,
-                createdAt: Date()
-            ),
-            Compound(
-                id: "3",
-                name: "Nandrolone Decanoate",
-                category: .anabolic,
-                halfLifeHours: 336, // 14 days
-                description: "Long-acting nandrolone ester",
-                isVerified: true,
-                createdAt: Date()
-            ),
-            Compound(
-                id: "4",
-                name: "Human Growth Hormone",
-                category: .peptide,
-                halfLifeHours: 4, // 4 hours
-                description: "Recombinant human growth hormone",
+                name: "Whey Protein",
+                category: .other,
+                halfLifeHours: nil,
+                description: "Fast-digesting protein for recovery",
                 isVerified: true,
                 createdAt: Date()
             )

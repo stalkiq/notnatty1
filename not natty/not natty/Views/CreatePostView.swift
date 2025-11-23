@@ -18,6 +18,7 @@
  */
 
 import SwiftUI
+import PhotosUI
 
 struct CreatePostView: View {
     @EnvironmentObject var postsManager: PostsManager
@@ -25,12 +26,13 @@ struct CreatePostView: View {
     
     @State private var content = ""
     @State private var selectedPostType: Post.PostType = .general
-    @State private var selectedPrivacyLevel: Post.PrivacyLevel = .public
+    @State private var selectedPrivacyLevel: Post.PrivacyLevel = .private
     @State private var selectedCompounds: [String] = []
     @State private var showCompoundSelector = false
     @State private var showImagePicker = false
     @State private var selectedImages: [UIImage] = []
     @State private var isPosting = false
+    @State private var tempSelectedCompound: String = ""
     
     private let maxContentLength = 500
     
@@ -49,7 +51,7 @@ struct CreatePostView: View {
                         // Text Input
                         CreatePostTextInput(content: $content, maxContentLength: maxContentLength)
                         
-                        // Compound Tags
+                        // Supplement Tags
                         CreatePostCompoundSection(
                             compoundTags: $selectedCompounds,
                             showCompoundSelector: $showCompoundSelector
@@ -146,10 +148,16 @@ struct CreatePostView: View {
             }
         }
         .sheet(isPresented: $showCompoundSelector) {
-            CompoundSelectorView(selectedCompound: .constant(""), selectedCompounds: $selectedCompounds)
+            CompoundSelectorView(selectedCompound: $tempSelectedCompound, selectedCompounds: $selectedCompounds)
         }
         .sheet(isPresented: $showImagePicker) {
             ImagePicker(selectedImages: $selectedImages)
+        }
+        .onChange(of: tempSelectedCompound) { oldValue, newValue in
+            if !newValue.isEmpty {
+                if !selectedCompounds.contains(newValue) { selectedCompounds.append(newValue) }
+                tempSelectedCompound = ""
+            }
         }
         .overlay(
             Group {
@@ -180,13 +188,17 @@ struct CreatePostView: View {
     private func createPost() async {
         isPosting = true
         
-        // TODO: Upload images and get URLs
-        let mediaURLs: [String] = [] // Placeholder for uploaded image URLs
+        // Save selected images to temporary files and pass file URLs so they render locally
+        let mediaURLs: [String] = selectedImages.compactMap { image in
+            guard let data = image.jpegData(compressionQuality: 0.9) else { return nil }
+            let url = FileManager.default.temporaryDirectory.appendingPathComponent("post_\(UUID().uuidString).jpg")
+            do { try data.write(to: url); return url.absoluteString } catch { return nil }
+        }
         
         await postsManager.createPost(
             content: content,
             postType: selectedPostType,
-            privacyLevel: selectedPrivacyLevel,
+            privacyLevel: .private,
             compoundTags: selectedCompounds,
             mediaURLs: mediaURLs
         )
@@ -219,34 +231,7 @@ struct CreatePostHeader: View {
                 .padding(.horizontal)
             }
             
-            // Privacy Level Selector
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Privacy:")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                
-                HStack(spacing: 8) {
-                    ForEach(Post.PrivacyLevel.allCases, id: \.self) { level in
-                        Button(action: {
-                            selectedPrivacyLevel = level
-                        }) {
-                            HStack(spacing: 4) {
-                                Image(systemName: level.icon)
-                                    .font(.caption)
-                                Text(level.displayName)
-                                    .font(.caption)
-                                    .fontWeight(.medium)
-                            }
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
-                            .background(selectedPrivacyLevel == level ? Color.orange : Color(.systemGray5))
-                            .foregroundColor(selectedPrivacyLevel == level ? .white : .primary)
-                            .cornerRadius(8)
-                        }
-                    }
-                }
-            }
-            .padding(.horizontal)
+            // Privacy Level Selector removed for personal mode
         }
         .padding(.vertical)
         .background(Color(.systemGray6))
@@ -343,7 +328,7 @@ struct PostTypeButton: View {
                     .fontWeight(.medium)
             }
             .frame(width: 60, height: 60)
-            .background(isSelected ? Color(postType.color) : Color(.systemGray5))
+            .background(isSelected ? postType.tintColor : Color(.systemGray5))
             .foregroundColor(isSelected ? .white : .primary)
             .cornerRadius(12)
         }
@@ -402,8 +387,8 @@ struct CreatePostPreviewCard: View {
                 }
                 .padding(.horizontal, 8)
                 .padding(.vertical, 4)
-                .background(Color(postType.color).opacity(0.2))
-                .foregroundColor(Color(postType.color))
+                .background(postType.tintColor.opacity(0.2))
+                .foregroundColor(postType.tintColor)
                 .cornerRadius(8)
             }
             
@@ -465,6 +450,7 @@ struct CompoundRow: View {
 struct ImagePicker: View {
     @Binding var selectedImages: [UIImage]
     @Environment(\.dismiss) var dismiss
+    @State private var showLibraryPicker = false
     
     var body: some View {
         NavigationView {
@@ -491,7 +477,7 @@ struct ImagePicker: View {
                     }
                     
                     Button(action: {
-                        // TODO: Implement photo library functionality
+                        showLibraryPicker = true
                     }) {
                         HStack {
                             Image(systemName: "photo.on.rectangle")
@@ -516,6 +502,40 @@ struct ImagePicker: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Cancel") {
                         dismiss()
+                    }
+                }
+            }
+        }
+        .sheet(isPresented: $showLibraryPicker) {
+            PhotoPicker(selectedImages: $selectedImages)
+        }
+    }
+}
+
+// MARK: - UIKit Photo Picker Wrapper
+struct PhotoPicker: UIViewControllerRepresentable {
+    @Binding var selectedImages: [UIImage]
+    func makeUIViewController(context: Context) -> PHPickerViewController {
+        var config = PHPickerConfiguration()
+        config.selectionLimit = 5
+        config.filter = .images
+        let picker = PHPickerViewController(configuration: config)
+        picker.delegate = context.coordinator
+        return picker
+    }
+    func updateUIViewController(_ uiViewController: PHPickerViewController, context: Context) {}
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
+    final class Coordinator: NSObject, PHPickerViewControllerDelegate {
+        let parent: PhotoPicker
+        init(_ parent: PhotoPicker) { self.parent = parent }
+        func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+            picker.dismiss(animated: true)
+            for item in results {
+                if item.itemProvider.canLoadObject(ofClass: UIImage.self) {
+                    item.itemProvider.loadObject(ofClass: UIImage.self) { obj, _ in
+                        if let image = obj as? UIImage {
+                            DispatchQueue.main.async { self.parent.selectedImages.append(image) }
+                        }
                     }
                 }
             }

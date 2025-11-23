@@ -1,6 +1,4 @@
-const { DataTypes } = require('sequelize');
-
-module.exports = (sequelize) => {
+module.exports = (sequelize, DataTypes) => {
   const User = sequelize.define('User', {
     id: {
       type: DataTypes.UUID,
@@ -8,7 +6,7 @@ module.exports = (sequelize) => {
       primaryKey: true
     },
     email: {
-      type: DataTypes.STRING(255),
+      type: DataTypes.STRING,
       allowNull: false,
       unique: true,
       validate: {
@@ -16,12 +14,11 @@ module.exports = (sequelize) => {
       }
     },
     username: {
-      type: DataTypes.STRING(50),
+      type: DataTypes.STRING,
       allowNull: false,
       unique: true,
       validate: {
-        len: [3, 50],
-        is: /^[a-zA-Z0-9_]+$/
+        len: [3, 20]
       }
     },
     password: {
@@ -29,11 +26,14 @@ module.exports = (sequelize) => {
       allowNull: false
     },
     fullName: {
-      type: DataTypes.STRING(255),
-      allowNull: true
+      type: DataTypes.STRING,
+      allowNull: true,
+      validate: {
+        len: [0, 100]
+      }
     },
     avatarUrl: {
-      type: DataTypes.TEXT,
+      type: DataTypes.STRING,
       allowNull: true
     },
     bio: {
@@ -66,28 +66,12 @@ module.exports = (sequelize) => {
     },
     profileData: {
       type: DataTypes.JSONB,
-      defaultValue: {}
+      allowNull: true
     },
     settings: {
       type: DataTypes.JSONB,
-      defaultValue: {
-        privacy: {
-          profileVisibility: 'public',
-          cycleVisibility: 'followers',
-          postVisibility: 'public'
-        },
-        notifications: {
-          newFollowers: true,
-          likes: true,
-          comments: true,
-          cycleReminders: true
-        },
-        units: {
-          weight: 'kg',
-          dosage: 'mg',
-          height: 'cm'
-        }
-      }
+      allowNull: true,
+      defaultValue: {}
     },
     isActive: {
       type: DataTypes.BOOLEAN,
@@ -130,12 +114,6 @@ module.exports = (sequelize) => {
       {
         unique: true,
         fields: ['username']
-      },
-      {
-        fields: ['verificationStatus']
-      },
-      {
-        fields: ['isActive']
       }
     ]
   });
@@ -144,32 +122,11 @@ module.exports = (sequelize) => {
   User.prototype.toJSON = function() {
     const values = Object.assign({}, this.get());
     delete values.password;
+    delete values.emailVerificationToken;
+    delete values.emailVerificationExpires;
+    delete values.passwordResetToken;
+    delete values.passwordResetExpires;
     return values;
-  };
-
-  User.prototype.getPublicProfile = function() {
-    const values = this.toJSON();
-    // Remove sensitive information for public profiles
-    delete values.email;
-    delete values.settings;
-    delete values.profileData;
-    return values;
-  };
-
-  // Class methods
-  User.findByEmail = function(email) {
-    return this.findOne({ where: { email } });
-  };
-
-  User.findByUsername = function(username) {
-    return this.findOne({ where: { username } });
-  };
-
-  User.findVerified = function() {
-    return this.findAll({ 
-      where: { verificationStatus: 'verified' },
-      attributes: { exclude: ['password', 'email', 'settings'] }
-    });
   };
 
   return User;

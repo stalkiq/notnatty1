@@ -8,13 +8,23 @@
 import SwiftUI
 
 struct ContentView: View {
+    @EnvironmentObject var authManager: AuthManager
+    @EnvironmentObject var themeManager: ThemeManager
+    
     var body: some View {
-        Text("Not Natty App")
-            .font(.title)
-            .foregroundColor(.orange)
+        Group {
+            if authManager.isAuthenticated {
+                MainTabView()
+            } else {
+                AuthenticationView()
+            }
+        }
+        .preferredColorScheme(themeManager.isDarkMode ? .dark : .light)
     }
 }
 
 #Preview {
     ContentView()
+        .environmentObject(AuthManager())
+        .environmentObject(ThemeManager())
 }

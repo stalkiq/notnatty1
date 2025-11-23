@@ -13,17 +13,17 @@ struct MainTabView: View {
     
     var body: some View {
         TabView(selection: $selectedTab) {
-            HomeFeedView()
+            TodayView()
                 .tabItem {
-                    Image(systemName: "house.fill")
-                    Text("Home")
+                    Image(systemName: "sun.max.fill")
+                    Text("Today")
                 }
                 .tag(0)
             
             CycleLogView()
                 .tabItem {
-                    Image(systemName: "chart.bar.fill")
-                    Text("Cycle Log")
+                    Image(systemName: "pills.fill")
+                    Text("Cycles")
                 }
                 .tag(1)
             
@@ -34,10 +34,10 @@ struct MainTabView: View {
                 }
                 .tag(2)
             
-            VerifiedProfilesView()
+            WeeklySummaryView()
                 .tabItem {
-                    Image(systemName: "checkmark.seal.fill")
-                    Text("Verified")
+                    Image(systemName: "chart.bar.fill")
+                    Text("Summary")
                 }
                 .tag(3)
             

@@ -1,76 +1,147 @@
 //
 //  ThemeManager.swift
-//  not natty
+//  Not Natty
 //
 //  Created by Apple Id on 7/26/25.
+//  Copyright © 2025 Not Natty. All rights reserved.
 //
+
+/**
+ * Theme Manager
+ * 
+ * Manages app-wide theming, dark/light mode preferences,
+ * and color schemes for the Not Natty app.
+ */
 
 import SwiftUI
 import Foundation
 
+@MainActor
 class ThemeManager: ObservableObject {
-    @Published var isDarkMode: Bool {
-        didSet {
-            UserDefaults.standard.set(isDarkMode, forKey: "isDarkMode")
-        }
-    }
+    @AppStorage("isDarkMode") var isDarkMode: Bool = false
+    @AppStorage("accentColor") var accentColor: String = "orange"
+    @AppStorage("useSystemTheme") var useSystemTheme: Bool = true
     
-    init() {
-        self.isDarkMode = UserDefaults.standard.bool(forKey: "isDarkMode")
-    }
-    
-    // MARK: - Color Schemes
-    var primaryColor: Color {
-        return .orange
-    }
+    // MARK: - Computed Properties
     
     var backgroundColor: Color {
-        return isDarkMode ? Color(.systemBackground) : Color(.systemBackground)
-    }
-    
-    var secondaryBackgroundColor: Color {
-        return isDarkMode ? Color(.secondarySystemBackground) : Color(.systemGray6)
+        isDarkMode ? Color(.systemBackground) : Color(.systemBackground)
     }
     
     var cardBackgroundColor: Color {
-        return isDarkMode ? Color(.tertiarySystemBackground) : Color(.systemBackground)
-    }
-    
-    var textColor: Color {
-        return isDarkMode ? .white : .black
-    }
-    
-    var secondaryTextColor: Color {
-        return isDarkMode ? .gray : .secondary
-    }
-    
-    var borderColor: Color {
-        return isDarkMode ? Color(.separator) : Color(.systemGray4)
+        isDarkMode ? Color(.secondarySystemBackground) : Color(.systemBackground)
     }
     
     var shadowColor: Color {
-        return isDarkMode ? .black.opacity(0.3) : .black.opacity(0.1)
+        isDarkMode ? Color.black.opacity(0.3) : Color.black.opacity(0.1)
     }
     
-    // MARK: - Theme-specific colors
-    var successColor: Color {
-        return .green
+    var textColor: Color {
+        isDarkMode ? Color.white : Color.black
     }
     
-    var warningColor: Color {
+    var secondaryTextColor: Color {
+        isDarkMode ? Color(.systemGray) : Color(.systemGray2)
+    }
+    
+    var borderColor: Color {
+        isDarkMode ? Color(.systemGray4) : Color(.systemGray5)
+    }
+    
+    var primaryAccentColor: Color {
+        switch accentColor {
+        case "orange": return .orange
+        case "blue": return .blue
+        case "green": return .green
+        case "purple": return .purple
+        case "red": return .red
+        default: return .orange
+        }
+    }
+    
+    // MARK: - Theme Methods
+    
+    func toggleDarkMode() {
+        isDarkMode.toggle()
+    }
+    
+    func setDarkMode(_ enabled: Bool) {
+        isDarkMode = enabled
+    }
+    
+    func setAccentColor(_ color: String) {
+        accentColor = color
+    }
+    
+    func setSystemTheme(_ enabled: Bool) {
+        useSystemTheme = enabled
+        if enabled {
+            // Use system setting
+            isDarkMode = UIScreen.main.traitCollection.userInterfaceStyle == .dark
+        }
+    }
+    
+    // MARK: - Color Schemes
+    
+    static let availableAccentColors = [
+        ("orange", "Orange", Color.orange),
+        ("blue", "Blue", Color.blue),
+        ("green", "Green", Color.green),
+        ("purple", "Purple", Color.purple),
+        ("red", "Red", Color.red)
+    ]
+    
+    // MARK: - Custom Colors for PED Tracking
+    
+    var injectionColor: Color {
         return .orange
     }
     
-    var errorColor: Color {
+    var progressColor: Color {
+        return .green
+    }
+    
+    var sideEffectColor: Color {
         return .red
     }
     
-    var infoColor: Color {
+    var mealColor: Color {
+        return .purple
+    }
+    
+    var workoutColor: Color {
         return .blue
     }
     
-    // MARK: - Toggle function
-    func toggleTheme() {
-        isDarkMode.toggle()
+    // MARK: - Compound Category Colors
+    
+    func colorForCompoundCategory(_ category: Compound.CompoundCategory) -> Color {
+        switch category {
+        case .testosterone:
+            return .blue
+        case .anabolic:
+            return .red
+        case .peptide:
+            return .green
+        case .sarm:
+            return .purple
+        case .other:
+            return .gray
+        }
+    }
+    
+    // MARK: - Cycle Status Colors
+    
+    func colorForCycleStatus(_ status: Cycle.CycleStatus) -> Color {
+        switch status {
+        case .planned:
+            return .blue
+        case .active:
+            return .green
+        case .completed:
+            return .gray
+        case .cancelled:
+            return .red
+        }
     }
 } 

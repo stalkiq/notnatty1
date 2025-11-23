@@ -1,242 +1,178 @@
-# Not Natty - iOS App
+# 💪 Not Natty - iOS App
 
-<div align="center">
-  <img src="https://img.shields.io/badge/iOS-15.0+-blue.svg" alt="iOS Version">
-  <img src="https://img.shields.io/badge/Swift-5.9-orange.svg" alt="Swift Version">
-  <img src="https://img.shields.io/badge/SwiftUI-4.0-green.svg" alt="SwiftUI Version">
-  <img src="https://img.shields.io/badge/Xcode-15.0+-purple.svg" alt="Xcode Version">
-</div>
+A comprehensive iOS application for bodybuilding and performance-enhancing drug (PED) cycle tracking, built with SwiftUI.
 
-A comprehensive iOS application for bodybuilding and steroid cycle tracking, built with SwiftUI and designed for the fitness community. Not Natty provides a social platform for sharing fitness progress, tracking steroid cycles, and connecting with like-minded individuals.
+## 📱 Features
 
-## 🚀 Features
+- **Social Media Feed**: Share and view posts about cycles, progress, and fitness
+- **Cycle Tracking**: Log and monitor PED cycles with detailed analytics
+- **Injection Logging**: Track injections with compound details and injection sites
+- **Side Effect Monitoring**: Monitor health metrics and side effects
+- **User Profiles**: Manage profiles with verification system
+- **Privacy Controls**: Granular privacy settings for posts and cycles
+- **Dark/Light Mode**: Full theme support with customizable colors
 
-### 📱 Social Media Feed
-- **Post Creation**: Create posts with multiple types (general, progress, injection, cycle)
-- **Privacy Controls**: Public, followers-only, or private posts
-- **Media Support**: Upload and share images with posts
-- **Engagement**: Like, comment, and repost functionality
-- **Compound Tagging**: Tag posts with specific steroid compounds
+## 🏗️ Architecture
 
-### 💉 Cycle Tracking
-- **Cycle Management**: Create and track steroid cycles
-- **Injection Logging**: Record injection details (compound, dose, location, date)
-- **Side Effect Monitoring**: Track and monitor side effects
-- **Progress Analytics**: Visualize cycle progress and results
-- **Compound Database**: Comprehensive database of steroid compounds
-
-### 👤 User Management
-- **Authentication**: Secure user registration and login
-- **Profile Management**: Customizable user profiles
-- **Privacy Settings**: Control who can see your content
-- **Verified Profiles**: Special verification system for trusted users
-
-### 📊 Analytics & Insights
-- **Progress Tracking**: Monitor gains and changes over time
-- **Cycle Analytics**: Analyze cycle effectiveness and side effects
-- **Social Analytics**: Track engagement and reach of posts
-
-## 🛠️ Technical Stack
-
-- **Framework**: SwiftUI 4.0
-- **Language**: Swift 5.9
-- **Platform**: iOS 15.0+
-- **Architecture**: MVVM with ObservableObject
-- **State Management**: @StateObject and @EnvironmentObject
-- **Backend**: Supabase (planned integration)
-
-## 📋 Requirements
-
-- **Xcode**: 15.0 or later
-- **iOS**: 15.0 or later
-- **macOS**: 12.0 or later (for development)
-- **Swift**: 5.9 or later
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-1. **Install Xcode** from the Mac App Store
-2. **Clone the repository**:
-   ```bash
-   git clone https://github.com/yourusername/not-natty-ios.git
-   cd not-natty-ios
-   ```
-
-### Installation
-
-1. **Open the project** in Xcode:
-   ```bash
-   open "not natty.xcodeproj"
-   ```
-
-2. **Select a simulator** or connected device:
-   - iPhone 16 or later recommended for testing
-   - iOS 15.0+ required
-
-3. **Build and run** the project:
-   - Press `⌘ + R` or click the Run button
-   - The app will launch in the simulator
-
-### Demo Mode
-
-The app currently runs in demo mode with sample data:
-- **Login**: Use any email/password combination
-- **Sample Data**: Pre-populated with example posts, cycles, and users
-- **Full Functionality**: All features work with local data
+- **Framework**: SwiftUI with iOS 18.5+
+- **State Management**: ObservableObject with @Published properties
+- **Navigation**: TabView with modal presentations
+- **Data Models**: Comprehensive models for users, posts, cycles, and injections
+- **Mock Data**: Built-in mock data for development and testing
 
 ## 📁 Project Structure
 
 ```
 not natty/
 ├── not natty/
-│   ├── Models/           # Data models
-│   │   ├── Post.swift
+│   ├── Models/              # Data models
 │   │   ├── User.swift
+│   │   ├── Post.swift
 │   │   └── Cycle.swift
-│   ├── Managers/         # Business logic
-│   │   ├── AuthManager.swift
-│   │   ├── PostsManager.swift
-│   │   └── CyclesManager.swift
-│   ├── Views/            # UI components
-│   │   ├── AuthenticationView.swift
-│   │   ├── CreatePostView.swift
+│   ├── Views/               # SwiftUI views
 │   │   ├── HomeFeedView.swift
+│   │   ├── CycleLogView.swift
+│   │   ├── CreatePostView.swift
 │   │   ├── ProfileView.swift
-│   │   └── CycleLogView.swift
-│   ├── MainTabView.swift # Main navigation
-│   └── not_nattyApp.swift # App entry point
-├── not nattyTests/       # Unit tests
-├── not nattyUITests/     # UI tests
-└── README.md
+│   │   ├── VerifiedProfilesView.swift
+│   │   ├── AuthenticationView.swift
+│   │   └── ComplianceView.swift
+│   ├── Managers/            # Business logic managers
+│   │   ├── AuthManager.swift
+│   │   ├── MockAuthManager.swift
+│   │   ├── PostsManager.swift
+│   │   ├── CyclesManager.swift
+│   │   ├── ThemeManager.swift
+│   │   ├── GeolocationManager.swift
+│   │   └── ContentModerationManager.swift
+│   ├── Services/            # API and external services
+│   │   └── APIService.swift
+│   ├── MainTabView.swift    # Main navigation
+│   ├── not_nattyApp.swift   # App entry point
+│   └── ContentView.swift    # Legacy view (can be removed)
+├── not natty.xcodeproj/     # Xcode project
+├── not nattyTests/          # Unit tests
+└── not nattyUITests/        # UI tests
 ```
 
-## 🧪 Testing
+## 🚀 Getting Started
 
-### Running Tests
+### Prerequisites
 
-1. **Unit Tests**:
-   ```bash
-   xcodebuild test -project "not natty.xcodeproj" -scheme "not natty" -destination "platform=iOS Simulator,name=iPhone 16"
-   ```
+- Xcode 16.0 or later
+- iOS 18.5+ deployment target
+- macOS 14.0 or later
 
-2. **UI Tests**:
-   - Open the project in Xcode
-   - Select the UI test target
-   - Press `⌘ + U` to run UI tests
+### Installation
 
-### Manual Testing
+1. Clone or download the project
+2. Open `not natty.xcodeproj` in Xcode
+3. Select your target device or simulator
+4. Build and run the project (⌘+R)
 
-1. **Authentication Flow**:
-   - Test login with any credentials
-   - Verify profile creation and management
+### Development Setup
 
-2. **Post Creation**:
-   - Create posts with different types
-   - Test privacy settings
-   - Verify compound tagging
+The app uses mock data for development:
 
-3. **Cycle Tracking**:
-   - Create new cycles
-   - Log injections
-   - Monitor side effects
+- **Demo User**: `demo@notnatty.com` / `password`
+- **Verified User**: `verified@notnatty.com` / `password`
 
-## 🔧 Development
+## 🎯 Core Features
 
-### Code Style
+### Authentication & Compliance
+- Age verification (18+ required)
+- Safety warnings and medical disclaimers
+- Location permission for gym tracking
+- Privacy controls and content moderation
 
-- **Swift Style Guide**: Follow Apple's Swift API Design Guidelines
-- **Documentation**: All public APIs should be documented
-- **Comments**: Use clear, concise comments for complex logic
-- **Naming**: Use descriptive names for variables, functions, and classes
+### Social Features
+- Post creation with media support
+- Compound tagging system
+- Privacy levels (Public, Followers, Private)
+- Like, comment, and repost functionality
+- User profiles with verification badges
 
-### Architecture
+### Cycle Tracking
+- Create and manage PED cycles
+- Log injections with detailed information
+- Track side effects and health metrics
+- Visual analytics and trend analysis
+- Export functionality for data portability
 
-The app follows the **MVVM (Model-View-ViewModel)** pattern:
+### User Management
+- Profile customization
+- Privacy settings
+- Verification system
+- Follower/Following management
 
-- **Models**: Data structures and business logic
-- **Views**: SwiftUI views for UI presentation
-- **Managers**: ObservableObject classes for state management
+## 🔧 Technical Details
 
 ### State Management
+- Uses SwiftUI's `@StateObject` and `@EnvironmentObject`
+- Managers handle business logic and data operations
+- Mock data for development without backend dependencies
 
-- **@StateObject**: For owned objects
-- **@EnvironmentObject**: For shared objects across views
-- **@State**: For local view state
-- **@Binding**: For two-way data binding
+### UI/UX
+- Modern SwiftUI design with custom components
+- Dark/Light mode support
+- Accessibility features
+- Responsive layout for different screen sizes
 
-## 🚧 Roadmap
+### Data Models
+- Comprehensive models for all app features
+- Codable support for data persistence
+- Type-safe enums for status and categories
 
-### Phase 1: Core Features ✅
-- [x] Basic UI and navigation
-- [x] Authentication system
-- [x] Post creation and feed
-- [x] Cycle tracking basics
-- [x] Profile management
+## 📋 Development Notes
 
-### Phase 2: Enhanced Features 🚧
-- [ ] Supabase backend integration
-- [ ] Real-time data synchronization
-- [ ] Push notifications
-- [ ] Image upload and storage
-- [ ] Advanced analytics
+### Mock Data
+The app includes comprehensive mock data for testing:
+- Sample users with different verification statuses
+- Example posts with various content types
+- Cycle data with injections and side effects
+- Compound database with categories
 
-### Phase 3: Advanced Features 📋
-- [ ] Social features (followers, messaging)
-- [ ] Advanced cycle planning
-- [ ] Progress photo tracking
-- [ ] Export and backup functionality
-- [ ] Community features
+### API Service
+The `APIService` class provides a complete interface for backend integration:
+- Authentication endpoints
+- CRUD operations for all models
+- Error handling and response parsing
+- Ready for real backend implementation
 
-## 🤝 Contributing
+### Content Moderation
+Built-in content moderation features:
+- Keyword filtering
+- Medical advice detection
+- User blocking and reporting
+- Safety warnings and disclaimers
 
-We welcome contributions! Please follow these steps:
+## 🛡️ Privacy & Safety
 
-1. **Fork the repository**
-2. **Create a feature branch**:
-   ```bash
-   git checkout -b feature/amazing-feature
-   ```
-3. **Commit your changes**:
-   ```bash
-   git commit -m 'Add amazing feature'
-   ```
-4. **Push to the branch**:
-   ```bash
-   git push origin feature/amazing-feature
-   ```
-5. **Open a Pull Request**
-
-### Contribution Guidelines
-
-- Follow the existing code style
-- Add tests for new functionality
-- Update documentation as needed
-- Ensure all tests pass before submitting
+- Age verification required
+- Medical disclaimers and safety warnings
+- Content moderation and filtering
+- Privacy controls for user data
+- Location data protection
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is for educational and development purposes. Please ensure compliance with local laws and regulations regarding performance-enhancing drugs and medical advice.
 
-## ⚠️ Disclaimer
+## 🤝 Contributing
 
-**Important**: This app is designed for educational and tracking purposes only. The developers do not endorse or promote the use of performance-enhancing drugs. Users are responsible for understanding and complying with all applicable laws and regulations in their jurisdiction.
+This is a local development project. For modifications:
+1. Make changes in Xcode
+2. Test with mock data
+3. Ensure all features work correctly
+4. Update documentation as needed
 
 ## 📞 Support
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/not-natty-ios/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/not-natty-ios/discussions)
-- **Email**: support@notnatty.app
-
-## 🙏 Acknowledgments
-
-- **SwiftUI Community** for excellent documentation and examples
-- **Apple Developer Team** for the amazing SwiftUI framework
-- **Fitness Community** for inspiration and feedback
+For development questions or issues:
+- Check the code comments for implementation details
+- Review the model structures for data relationships
+- Test with the provided mock data
 
 ---
 
-<div align="center">
-  <p>Built with ❤️ for the fitness community</p>
-  <p>Made with SwiftUI and Swift</p>
-</div> 
+**Note**: This app is designed for educational purposes and cycle tracking. Always consult healthcare professionals before using performance-enhancing drugs. 

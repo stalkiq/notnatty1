@@ -15,6 +15,7 @@
  */
 
 import Foundation
+import SwiftUI
 
 struct Post: Identifiable, Codable {
     let id: String
@@ -45,13 +46,11 @@ struct Post: Identifiable, Codable {
     
     enum PrivacyLevel: String, Codable, CaseIterable {
         case `public` = "public"
-        case followers = "followers"
         case `private` = "private"
         
         var displayName: String {
             switch self {
             case .public: return "Public"
-            case .followers: return "Followers"
             case .private: return "Private"
             }
         }
@@ -59,7 +58,6 @@ struct Post: Identifiable, Codable {
         var icon: String {
             switch self {
             case .public: return "globe"
-            case .followers: return "person.2"
             case .private: return "lock"
             }
         }
@@ -76,7 +74,7 @@ struct Post: Identifiable, Codable {
         var displayName: String {
             switch self {
             case .general: return "General"
-            case .injection: return "Injection"
+            case .injection: return "Supplement Dose"
             case .progress: return "Progress"
             case .meal: return "Meal"
             case .workout: return "Workout"
@@ -87,7 +85,7 @@ struct Post: Identifiable, Codable {
         var icon: String {
             switch self {
             case .general: return "text.bubble"
-            case .injection: return "syringe"
+            case .injection: return "pills"
             case .progress: return "chart.line.uptrend.xyaxis"
             case .meal: return "fork.knife"
             case .workout: return "dumbbell"
@@ -95,14 +93,14 @@ struct Post: Identifiable, Codable {
             }
         }
         
-        var color: String {
+        var tintColor: Color {
             switch self {
-            case .general: return "blue"
-            case .injection: return "orange"
-            case .progress: return "green"
-            case .meal: return "purple"
-            case .workout: return "red"
-            case .sideEffect: return "yellow"
+            case .general: return .blue
+            case .injection: return .orange
+            case .progress: return .green
+            case .meal: return .purple
+            case .workout: return .red
+            case .sideEffect: return .yellow
             }
         }
     }

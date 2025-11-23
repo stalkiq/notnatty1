@@ -99,13 +99,6 @@ iOSInjectionProject/
 # Logs
 *.log
 
-# AWS
-.aws/
-amplify/
-aws-exports.js
-awsconfiguration.json
-amplifyconfiguration.json
-
 # Environment files
 .env
 .env.local
@@ -120,3 +113,5 @@ amplifyconfiguration.json
 # Backup files
 *~
 *.bak 
+not natty/backend/node_modules/
+.DS_Store

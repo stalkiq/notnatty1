@@ -9,6 +9,7 @@ import SwiftUI
 
 struct CycleLogView: View {
     @EnvironmentObject var cyclesManager: CyclesManager
+    @EnvironmentObject var postsManager: PostsManager
     @State private var selectedTab = 0
     @State private var showAddInjection = false
     @State private var showAddSideEffect = false
@@ -29,7 +30,7 @@ struct CycleLogView: View {
                     
                     Menu {
                         Button(action: { showAddInjection = true }) {
-                            Label("Log Injection", systemImage: "syringe")
+                            Label("Log Supplement Dose", systemImage: "pills")
                         }
                         
                         Button(action: { showAddSideEffect = true }) {
@@ -47,7 +48,7 @@ struct CycleLogView: View {
                 // Tab Selector
                 Picker("Cycle Log Tabs", selection: $selectedTab) {
                     Text("Overview").tag(0)
-                    Text("Injections").tag(1)
+                    Text("Doses").tag(1)
                     Text("Side Effects").tag(2)
                     Text("Analytics").tag(3)
                 }
@@ -56,7 +57,7 @@ struct CycleLogView: View {
                 
                 // Content based on selected tab
                 TabView(selection: $selectedTab) {
-                    CycleOverviewTab()
+                    CycleOverviewTab(showCreateCycle: $showCreateCycle)
                         .tag(0)
                     
                     InjectionsTab()
@@ -76,10 +77,10 @@ struct CycleLogView: View {
             await cyclesManager.fetchCycles()
         }
         .sheet(isPresented: $showAddInjection) {
-            AddInjectionView()
+            AddInjectionView(onLogged: { selectedTab = 1 })
         }
         .sheet(isPresented: $showAddSideEffect) {
-            AddSideEffectView()
+            AddSideEffectView(onLogged: { selectedTab = 2 })
         }
         .sheet(isPresented: $showCreateCycle) {
             CreateCycleView()
@@ -89,6 +90,7 @@ struct CycleLogView: View {
 
 struct CycleOverviewTab: View {
     @EnvironmentObject var cyclesManager: CyclesManager
+    @Binding var showCreateCycle: Bool
     
     var body: some View {
         ScrollView {
@@ -97,14 +99,11 @@ struct CycleOverviewTab: View {
                 if let currentCycle = cyclesManager.cycles.first(where: { $0.status == .active }) {
                     CurrentCycleCard(cycle: currentCycle)
                 } else {
-                    NoActiveCycleCard()
+                    NoActiveCycleCard(onCreate: { showCreateCycle = true })
                 }
                 
-                // Quick Stats
-                QuickStatsCard()
-                
-                // Recent Activity
-                RecentActivityCard()
+                // Quick Stats removed
+                // Recent Activity removed
             }
             .padding()
         }
@@ -130,6 +129,10 @@ struct CurrentCycleCard: View {
                 Spacer()
                 
                 StatusBadge(status: cycle.status)
+                ShareLink(item: shareText) {
+                    Image(systemName: "square.and.arrow.up")
+                        .foregroundColor(.orange)
+                }
             }
             
             // Cycle Progress
@@ -197,11 +200,18 @@ struct CurrentCycleCard: View {
     private var cycleProgress: Double {
         // Assuming a 12-week cycle for demo purposes
         let totalDays = 12 * 7
+        guard totalDays > 0 else { return 0 }
         return min(Double(cycleDaysElapsed) / Double(totalDays), 1.0)
+    }
+
+    private var shareText: String {
+        "My supplement program: \(cycle.name). Goals: \(cycle.goals.joined(separator: ", ")). Started on \(cycle.startDate.formatted(date: .abbreviated, time: .omitted))."
     }
 }
 
 struct NoActiveCycleCard: View {
+    let onCreate: () -> Void
+    
     var body: some View {
         VStack(spacing: 16) {
             Image(systemName: "chart.bar.doc.horizontal")
@@ -213,15 +223,13 @@ struct NoActiveCycleCard: View {
                     .font(.title2)
                     .fontWeight(.bold)
                 
-                Text("Start tracking your PED cycle to monitor progress and side effects.")
+                Text("Start tracking your supplement program to monitor progress and well-being.")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
             }
             
-            Button("Create New Cycle") {
-                // TODO: Show create cycle form
-            }
+            Button("Create New Cycle") { onCreate() }
             .buttonStyle(.borderedProminent)
             .tint(.orange)
         }
@@ -232,199 +240,6 @@ struct NoActiveCycleCard: View {
     }
 }
 
-struct QuickStatsCard: View {
-    @EnvironmentObject var cyclesManager: CyclesManager
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Quick Stats")
-                .font(.headline)
-                .fontWeight(.bold)
-            
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 16) {
-                CycleStatItem(
-                    title: "Total Injections",
-                    value: "\(cyclesManager.injections.count)",
-                    icon: "syringe",
-                    color: .orange
-                )
-                
-                CycleStatItem(
-                    title: "Side Effects",
-                    value: "\(cyclesManager.sideEffects.count)",
-                    icon: "exclamationmark.triangle",
-                    color: .red
-                )
-                
-                CycleStatItem(
-                    title: "Active Days",
-                    value: "30",
-                    icon: "calendar",
-                    color: .blue
-                )
-                
-                CycleStatItem(
-                    title: "Compounds",
-                    value: "\(cyclesManager.compounds.count)",
-                    icon: "pills",
-                    color: .green
-                )
-            }
-        }
-        .padding()
-        .background(Color(.systemBackground))
-        .cornerRadius(16)
-        .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
-    }
-}
-
-struct CycleStatItem: View {
-    let title: String
-    let value: String
-    let icon: String
-    let color: Color
-    
-    var body: some View {
-        VStack(spacing: 8) {
-            Image(systemName: icon)
-                .font(.title2)
-                .foregroundColor(color)
-            
-            Text(value)
-                .font(.title2)
-                .fontWeight(.bold)
-            
-            Text(title)
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: .infinity)
-        .padding()
-        .background(color.opacity(0.1))
-        .cornerRadius(12)
-    }
-}
-
-struct RecentActivityCard: View {
-    @EnvironmentObject var cyclesManager: CyclesManager
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Recent Activity")
-                .font(.headline)
-                .fontWeight(.bold)
-            
-            if cyclesManager.injections.isEmpty && cyclesManager.sideEffects.isEmpty {
-                Text("No recent activity")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding()
-            } else {
-                LazyVStack(spacing: 8) {
-                    ForEach(recentActivities.prefix(5), id: \.id) { activity in
-                        ActivityRow(activity: activity)
-                    }
-                }
-            }
-        }
-        .padding()
-        .background(Color(.systemBackground))
-        .cornerRadius(16)
-        .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
-    }
-    
-    private var recentActivities: [ActivityItem] {
-        var activities: [ActivityItem] = []
-        
-        // Add injections
-        for injection in cyclesManager.injections {
-            activities.append(ActivityItem(
-                id: injection.id,
-                type: .injection,
-                title: "\(injection.compoundName) - \(injection.dosageMg)mg",
-                subtitle: injection.injectionSite?.displayName ?? "Unknown site",
-                date: injection.injectedAt,
-                color: .orange
-            ))
-        }
-        
-        // Add side effects
-        for sideEffect in cyclesManager.sideEffects {
-            activities.append(ActivityItem(
-                id: sideEffect.id,
-                type: .sideEffect,
-                title: "Side Effect Logged",
-                subtitle: sideEffect.symptoms.joined(separator: ", "),
-                date: sideEffect.recordedAt,
-                color: .red
-            ))
-        }
-        
-        // Sort by date
-        return activities.sorted { $0.date > $1.date }
-    }
-}
-
-struct ActivityItem {
-    let id: String
-    let type: ActivityType
-    let title: String
-    let subtitle: String
-    let date: Date
-    let color: Color
-    
-    enum ActivityType {
-        case injection
-        case sideEffect
-    }
-}
-
-struct ActivityRow: View {
-    let activity: ActivityItem
-    
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: activity.type == .injection ? "syringe" : "exclamationmark.triangle")
-                .font(.subheadline)
-                .foregroundColor(activity.color)
-                .frame(width: 20)
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text(activity.title)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                
-                Text(activity.subtitle)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-            
-            Spacer()
-            
-            Text(timeAgoString(from: activity.date))
-                .font(.caption)
-                .foregroundColor(.secondary)
-        }
-        .padding(.vertical, 4)
-    }
-    
-    private func timeAgoString(from date: Date) -> String {
-        let interval = Date().timeIntervalSince(date)
-        
-        if interval < 3600 {
-            let minutes = Int(interval / 60)
-            return "\(minutes)m ago"
-        } else if interval < 86400 {
-            let hours = Int(interval / 3600)
-            return "\(hours)h ago"
-        } else {
-            let days = Int(interval / 86400)
-            return "\(days)d ago"
-        }
-    }
-}
 
 struct StatusBadge: View {
     let status: Cycle.CycleStatus
@@ -488,20 +303,20 @@ struct InjectionsTab: View {
             
             if filteredInjections.isEmpty {
                 VStack(spacing: 16) {
-                    Image(systemName: "syringe")
+                    Image(systemName: "pills")
                         .font(.system(size: 50))
                         .foregroundColor(.orange)
                     
-                    Text("No Injections Logged")
+                    Text("No Doses Logged")
                         .font(.title2)
                         .fontWeight(.bold)
                     
-                    Text("Start tracking your injections to monitor your cycle progress.")
+                    Text("Start tracking your supplement doses to monitor your plan.")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
                     
-                    Button("Log First Injection") {
+                    Button("Log First Dose") {
                         showAddInjection = true
                     }
                     .buttonStyle(.borderedProminent)
@@ -615,7 +430,7 @@ struct InjectionDetailView: View {
                                 .foregroundColor(.orange)
                         }
                         
-                        Text("Injected on \(injection.injectedAt, style: .date) at \(injection.injectedAt, style: .time)")
+                        Text("Logged on \(injection.injectedAt, style: .date) at \(injection.injectedAt, style: .time)")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
@@ -625,8 +440,7 @@ struct InjectionDetailView: View {
                     
                     // Details
                     VStack(alignment: .leading, spacing: 16) {
-                        DetailRow(title: "Injection Site", value: injection.injectionSite?.displayName ?? "Not specified", icon: "location.circle.fill")
-                        DetailRow(title: "Method", value: injection.injectionMethod?.displayName ?? "Not specified", icon: "syringe")
+                        DetailRow(title: "Intake Method", value: injection.injectionMethod?.displayName ?? "Not specified", icon: "pills")
                         
                         if let notes = injection.notes, !notes.isEmpty {
                             VStack(alignment: .leading, spacing: 8) {
@@ -749,7 +563,7 @@ struct SideEffectsTab: View {
                     
                     Text("Track your side effects to monitor your health and cycle progress")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
                     
                     Button("Log First Side Effect") {
@@ -783,7 +597,7 @@ struct AnalyticsTab: View {
     @State private var selectedMetric = "Injections"
     
     let timeframes = ["7 Days", "30 Days", "90 Days", "All Time"]
-    let metrics = ["Injections", "Side Effects", "Compounds", "Health"]
+    let metrics = ["Doses", "Side Effects", "Compounds", "Health"]
     
     var filteredData: (injections: [Injection], sideEffects: [SideEffect]) {
         let calendar = Calendar.current
@@ -811,7 +625,7 @@ struct AnalyticsTab: View {
                 // Header with controls
                 VStack(spacing: 16) {
                     HStack {
-                        Text("Analytics")
+            Text("Analytics")
                             .font(.title2)
                             .fontWeight(.bold)
                         Spacer()
@@ -861,9 +675,9 @@ struct AnalyticsTab: View {
                 // Overview Cards
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 16) {
                     StatCard(
-                        title: "Total Injections",
+                        title: "Total Doses",
                         value: "\(filteredData.injections.count)",
-                        icon: "syringe",
+                        icon: "pills",
                         color: .blue
                     )
                     
@@ -935,13 +749,13 @@ struct StatCard: View {
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(value)
-                    .font(.title)
+                .font(.title)
                     .fontWeight(.bold)
                     .foregroundColor(.primary)
                 
                 Text(title)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                .foregroundColor(.secondary)
             }
         }
         .padding()
@@ -971,7 +785,7 @@ struct InjectionFrequencyChart: View {
             HStack {
                 Image(systemName: "chart.line.uptrend.xyaxis")
                     .foregroundColor(.blue)
-                Text("Injection Frequency")
+                Text("Dose Frequency")
                     .font(.headline)
                     .fontWeight(.medium)
                 Spacer()
@@ -982,7 +796,7 @@ struct InjectionFrequencyChart: View {
                     Image(systemName: "chart.line.downtrend.xyaxis")
                         .font(.system(size: 40))
                         .foregroundColor(.secondary)
-                    Text("No injection data")
+                    Text("No dose data")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
@@ -1138,7 +952,7 @@ struct CompoundUsageChart: View {
                                     .fontWeight(.medium)
                                     .lineLimit(1)
                                 
-                                Text("\(data.count) injections")
+                                Text("\(data.count) doses")
                                     .font(.caption2)
                                     .foregroundColor(.secondary)
                             }
@@ -1498,7 +1312,7 @@ struct SideEffectDetailView: View {
                                     .foregroundColor(.orange)
                                 Text("Notes")
                                     .font(.headline)
-                                    .fontWeight(.medium)
+                                .fontWeight(.medium)
                             }
                             
                             Text(notes)
@@ -1543,6 +1357,7 @@ struct SideEffectDetailView: View {
 struct AddInjectionView: View {
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var cyclesManager: CyclesManager
+    var onLogged: (() -> Void)? = nil
     
     @State private var selectedCycle: Cycle?
     @State private var selectedCompound = ""
@@ -1567,7 +1382,7 @@ struct AddInjectionView: View {
                             Spacer()
                             if let cycle = selectedCycle {
                                 Text(cycle.name)
-                                    .foregroundColor(.secondary)
+                    .foregroundColor(.secondary)
                             } else {
                                 Text("Required")
                                     .foregroundColor(.orange)
@@ -1578,7 +1393,7 @@ struct AddInjectionView: View {
                     }
                 }
                 
-                Section("Injection Details") {
+                Section("Supplement Dose Details") {
                     Button(action: {
                         showingCompoundSelector = true
                     }) {
@@ -1606,7 +1421,7 @@ struct AddInjectionView: View {
                     
                     DatePicker("Date & Time", selection: $injectionDate)
                     
-                    Picker("Injection Site", selection: $injectionSite) {
+                    Picker("Intake Site", selection: $injectionSite) {
                         ForEach(injectionSites, id: \.self) { site in
                             Text(site.displayName).tag(site)
                         }
@@ -1614,11 +1429,11 @@ struct AddInjectionView: View {
                 }
                 
                 Section("Notes") {
-                    TextField("Add notes about this injection...", text: $notes, axis: .vertical)
+                    TextField("Add notes about this dose...", text: $notes, axis: .vertical)
                         .lineLimit(3...6)
                 }
             }
-            .navigationTitle("Log Injection")
+            .navigationTitle("Log Dose")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -1628,9 +1443,7 @@ struct AddInjectionView: View {
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Log") {
-                        logInjection()
-                    }
+                    Button("Log") { logInjection() }
                     .fontWeight(.semibold)
                     .disabled(selectedCycle == nil || selectedCompound.isEmpty || dosage.isEmpty)
                 }
@@ -1656,9 +1469,11 @@ struct AddInjectionView: View {
                 cycleId: selectedCycle?.id,
                 notes: notes.isEmpty ? nil : notes
             )
+            onLogged?()
             dismiss()
         }
     }
+
 }
 
 struct CycleSelectorView: View {
@@ -1722,9 +1537,27 @@ struct CompoundSelectorView: View {
     @State private var searchText = ""
     
     let compounds = [
-        "Testosterone Enanthate", "Testosterone Cypionate", "Testosterone Propionate",
-        "Trenbolone Acetate", "Trenbolone Enanthate", "Deca-Durabolin", "Masteron",
-        "Anadrol", "Anavar", "Winstrol", "Dianabol", "Primobolan", "Equipoise"
+        "Whey Protein",
+        "Micellar Casein",
+        "Mass Gainers",
+        "Creatine Monohydrate",
+        "BCAAs",
+        "EAAs",
+        "Glutamine",
+        "Beta-Alanine",
+        "Citrulline",
+        "Arginine",
+        "Betaine",
+        "HMB",
+        "Caffeine",
+        "Fish Oil",
+        "Vitamin D",
+        "CoQ10",
+        "Carnitine",
+        "Multivitamins",
+        "ZMA",
+        "DHEA",
+        "Essential Fatty Acids"
     ]
     
     var filteredCompounds: [String] {
@@ -1794,14 +1627,19 @@ struct CompoundSelectorView: View {
 struct CreateCycleView: View {
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var cyclesManager: CyclesManager
+    @EnvironmentObject var supplementsManager: SupplementsManager
+    @EnvironmentObject var authManager: AuthManager
+    @EnvironmentObject var postsManager: PostsManager
+    @Environment(\.appContainer) var appContainer: AppContainer
     
     @State private var cycleName = ""
     @State private var startDate = Date()
     @State private var durationWeeks = 12
     @State private var selectedGoals: Set<String> = []
     @State private var notes = ""
-    @State private var selectedCompounds: [String] = []
+    @State private var selectedCompounds: [SupplementPlan] = []
     @State private var showingCompoundSelector = false
+    @State private var postToFeed = true
     
     let availableGoals = [
         "Muscle Gain", "Fat Loss", "Strength", "Performance", 
@@ -1825,23 +1663,31 @@ struct CreateCycleView: View {
                         ForEach(availableGoals, id: \.self) { goal in
                             GoalToggleButton(
                                 goal: goal,
-                                isSelected: selectedGoals.contains(goal),
-                                onToggle: {
-                                    if selectedGoals.contains(goal) {
-                                        selectedGoals.remove(goal)
-                                    } else {
-                                        selectedGoals.insert(goal)
+                                isSelected: Binding(
+                                    get: { selectedGoals.contains(goal) },
+                                    set: { newValue in
+                                        if newValue { selectedGoals.insert(goal) } else { selectedGoals.remove(goal) }
                                     }
-                                }
+                                )
                             )
                         }
                     }
                 }
                 
-                Section("Compounds") {
-                    Text("Compound selection coming soon...")
-                        .foregroundColor(.secondary)
-                        .italic()
+                Section("Supplements") {
+                    if selectedCompounds.isEmpty {
+                        Button(action: { showingCompoundSelector = true }) {
+                            HStack { Image(systemName: "plus.circle"); Text("Add Supplements") }
+                        }
+                        .foregroundColor(.orange)
+                    } else {
+                        ForEach($selectedCompounds) { $plan in
+                            SupplementPlanRow(plan: $plan)
+                        }
+                        .onDelete { idx in selectedCompounds.remove(atOffsets: idx) }
+                        Button(action: { showingCompoundSelector = true }) { Text("Add more") }
+                            .foregroundColor(.orange)
+                    }
                 }
                 
                 Section("Notes") {
@@ -1863,35 +1709,148 @@ struct CreateCycleView: View {
                         createCycle()
                     }
                     .fontWeight(.semibold)
-                    .disabled(cycleName.isEmpty || selectedGoals.isEmpty)
+                    .disabled(cycleName.isEmpty || selectedGoals.isEmpty || selectedCompounds.isEmpty)
                 }
             }
-            // TODO: Add compound selector sheet
+            .sheet(isPresented: $showingCompoundSelector) {
+                SupplementMultiSelector(
+                    preselected: Set(selectedCompounds.map { $0.supplement.name }),
+                    onDone: { names in
+                        let chosen = supplementsManager.catalog.filter { names.contains($0.name) }
+                        for s in chosen {
+                            if !selectedCompounds.contains(where: { $0.supplement.name == s.name }) {
+                                selectedCompounds.append(SupplementPlan(supplement: s))
+                            }
+                        }
+                    }
+                ).environmentObject(supplementsManager)
+            }
+            Section("Sharing") {
+                Toggle("Post to feed after creating", isOn: $postToFeed)
+            }
         }
     }
     
     private func createCycle() {
-        // For now, create a simple cycle without compounds
         Task {
-            await cyclesManager.createCycle(
-                name: cycleName,
-                startDate: startDate,
-                goals: Array(selectedGoals),
-                compounds: [], // TODO: Implement compound selection
-                notes: notes.isEmpty ? nil : notes
-            )
-            dismiss()
+            do {
+                let userId = authManager.currentUser?.id ?? "local-user"
+                let created = try await appContainer.createCyclePlan(
+                    userId: userId,
+                    name: cycleName,
+                    startDate: startDate,
+                    durationWeeks: durationWeeks,
+                    goals: Array(selectedGoals),
+                    supplementPlans: selectedCompounds,
+                    notes: notes.isEmpty ? nil : notes
+                )
+                await cyclesManager.fetchCycles()
+                if postToFeed {
+                    await postCycleToFeed(cycleName: created.name, goals: created.goals)
+                }
+                dismiss()
+            } catch {
+                // Fallback to existing manager if needed
+                await cyclesManager.createCycle(
+                    name: cycleName,
+                    startDate: startDate,
+                    goals: Array(selectedGoals),
+                    compounds: [],
+                    notes: notes.isEmpty ? nil : notes
+                )
+                if postToFeed { await postCycleToFeed(cycleName: cycleName, goals: Array(selectedGoals)) }
+                dismiss()
+            }
+        }
+    }
+
+    private func postCycleToFeed(cycleName: String, goals: [String]) async {
+        let content = "Started a new program: \(cycleName). Goals: \(goals.joined(separator: ", "))."
+        await postsManager.createPost(
+            content: content,
+            postType: Post.PostType.general,
+            privacyLevel: Post.PrivacyLevel.public,
+            compoundTags: selectedCompounds.map { $0.supplement.name }
+        )
+    }
+}
+
+struct SupplementPlanRow: View {
+    @Binding var plan: SupplementPlan
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text(plan.supplement.name).font(.headline)
+                Spacer()
+                Text("every \(plan.frequencyDays)d").font(.caption).foregroundColor(.secondary)
+            }
+            HStack {
+                TextField("Amount", value: $plan.dosage, format: .number)
+                    .keyboardType(.decimalPad)
+                Picker("", selection: $plan.unit) {
+                    ForEach(plan.supplement.allowedUnits, id: \.self) { Text($0).tag($0) }
+                }
+                .pickerStyle(.menu)
+            }
+            Stepper("Frequency: every \(plan.frequencyDays) day(s)", value: $plan.frequencyDays, in: 1...7)
+            if let ts = plan.supplement.typicalServing as TypicalServing? {
+                Text("Typical: \(ts.min, specifier: "%.0f").\(ts.max, specifier: "%.0f") \(ts.unit)")
+                    .font(.caption).foregroundColor(.secondary)
+            }
+            TextField("Notes (optional)", text: $plan.notes)
+        }
+    }
+}
+
+struct SupplementMultiSelector: View {
+    @Environment(\.dismiss) var dismiss
+    @EnvironmentObject var supplementsManager: SupplementsManager
+    
+    let preselected: Set<String>
+    let onDone: (Set<String>) -> Void
+    
+    @State private var selections: Set<String> = []
+    @State private var searchText: String = ""
+    
+    var filtered: [Supplement] {
+        let base = supplementsManager.catalog
+        guard !searchText.isEmpty else { return base }
+        return base.filter { $0.name.localizedCaseInsensitiveContains(searchText) || ($0.aka ?? "").localizedCaseInsensitiveContains(searchText) }
+    }
+    
+    var body: some View {
+        NavigationView {
+            VStack {
+                SearchBar(text: $searchText).padding()
+                List(filtered, id: \.id, selection: Binding(get: { selections }, set: { selections = $0 })) { item in
+                    HStack {
+                        Text(item.name)
+                        Spacer()
+                        if selections.contains(item.name) { Image(systemName: "checkmark.circle.fill").foregroundColor(.orange) }
+                    }
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        if selections.contains(item.name) { selections.remove(item.name) } else { selections.insert(item.name) }
+                    }
+                }
+                .environment(\.editMode, .constant(.active))
+            }
+            .navigationTitle("Select Supplements")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) { Button("Cancel") { dismiss() } }
+                ToolbarItem(placement: .navigationBarTrailing) { Button("Done") { onDone(selections); dismiss() }.disabled(selections.isEmpty) }
+            }
+            .onAppear { selections = preselected }
         }
     }
 }
 
 struct GoalToggleButton: View {
     let goal: String
-    let isSelected: Bool
-    let onToggle: () -> Void
+    @Binding var isSelected: Bool
     
     var body: some View {
-        Button(action: onToggle) {
+        Button(action: { isSelected.toggle() }) {
             Text(goal)
                 .font(.caption)
                 .fontWeight(.medium)
@@ -1901,6 +1860,8 @@ struct GoalToggleButton: View {
                 .background(isSelected ? Color.orange : Color.orange.opacity(0.1))
                 .cornerRadius(20)
         }
+        .buttonStyle(.plain)
+        .contentShape(Rectangle())
     }
 }
 
@@ -1931,6 +1892,7 @@ struct CompoundTag: View {
 struct AddSideEffectView: View {
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var cyclesManager: CyclesManager
+    var onLogged: (() -> Void)? = nil
     
     @State private var selectedCycle: Cycle?
     @State private var selectedSymptoms: Set<String> = []
@@ -2099,13 +2061,7 @@ struct AddSideEffectView: View {
                     }
                 }
                 
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Log") {
-                        logSideEffect()
-                    }
-                    .fontWeight(.semibold)
-                    .disabled(selectedSymptoms.isEmpty)
-                }
+                ToolbarItem(placement: .navigationBarTrailing) { Button("Log") { logSideEffect() }.fontWeight(.semibold).disabled(selectedSymptoms.isEmpty) }
             }
             .sheet(isPresented: $showingCycleSelector) {
                 CycleSelectorView(selectedCycle: $selectedCycle)
@@ -2179,6 +2135,7 @@ struct AddSideEffectView: View {
                 notes: notes.isEmpty ? nil : notes,
                 cycleId: selectedCycle?.id
             )
+            onLogged?()
             dismiss()
         }
     }

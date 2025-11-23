@@ -25,6 +25,7 @@ class AuthManager: ObservableObject {
     @Published var errorMessage: String?
     @Published var showEmailVerificationAlert = false
     @Published var emailVerificationMessage = ""
+    // Invite-only removed – keep simple auth
     
     // MARK: - Authentication Methods
     
@@ -32,25 +33,32 @@ class AuthManager: ObservableObject {
         isLoading = true
         errorMessage = nil
         
-        do {
-            let (user, token) = try await APIService.shared.register(
-                email: email,
-                username: username,
-                password: password,
-                fullName: fullName ?? ""
-            )
-            
-            // Store user but don't authenticate yet (email not verified)
-            currentUser = user
-            APIService.shared.setAuthToken(token)
-            
-            // Show email verification message
-            emailVerificationMessage = "Registration successful! Please check your email to verify your account before logging in."
-            showEmailVerificationAlert = true
-            
-        } catch {
-            errorMessage = "Registration failed: \(error.localizedDescription)"
-        }
+        // For local testing without server
+        let mockUser = User(
+            id: UUID().uuidString,
+            email: email,
+            username: username,
+            fullName: fullName,
+            avatarURL: nil,
+            bio: nil,
+            heightCm: nil,
+            weightKg: nil,
+            dateOfBirth: nil,
+            verificationStatus: .verified,
+            emailVerified: true,
+            profileData: [:],
+            settings: User.UserSettings(
+                privacy: .init(profileVisibility: "public", cycleVisibility: "followers", postVisibility: "public"),
+                notifications: .init(newFollowers: true, likes: true, comments: true, cycleReminders: true),
+                units: .init(weight: "kg", dosage: "mg", height: "cm")
+            ),
+            isActive: true,
+            createdAt: Date(),
+            updatedAt: Date()
+        )
+        
+        currentUser = mockUser
+        isAuthenticated = true
         
         isLoading = false
     }
@@ -59,41 +67,52 @@ class AuthManager: ObservableObject {
         isLoading = true
         errorMessage = nil
         
-        do {
-            let (user, token) = try await APIService.shared.login(
-                email: email,
-                password: password
-            )
-            
-            currentUser = user
-            isAuthenticated = true
-            APIService.shared.setAuthToken(token)
-            
-        } catch {
-            errorMessage = "Login failed: \(error.localizedDescription)"
-        }
+        // For local testing without server - accept any credentials
+        let mockUser = User(
+            id: UUID().uuidString,
+            email: email,
+            username: email.components(separatedBy: "@").first ?? "user",
+            fullName: "Test User",
+            avatarURL: nil,
+            bio: "This is a test account for local development",
+            heightCm: 180,
+            weightKg: 85.0,
+            dateOfBirth: nil,
+            verificationStatus: .verified,
+            emailVerified: true,
+            profileData: [:],
+            settings: User.UserSettings(
+                privacy: .init(profileVisibility: "public", cycleVisibility: "followers", postVisibility: "public"),
+                notifications: .init(newFollowers: true, likes: true, comments: true, cycleReminders: true),
+                units: .init(weight: "kg", dosage: "mg", height: "cm")
+            ),
+            isActive: true,
+            createdAt: Date(),
+            updatedAt: Date()
+        )
+        
+        currentUser = mockUser
+        isAuthenticated = true
         
         isLoading = false
     }
+
+    // Invites removed
     
     func signOut() {
         currentUser = nil
         isAuthenticated = false
         errorMessage = nil
-        APIService.shared.clearAuthToken()
     }
     
     func verifyEmail(token: String) async {
         isLoading = true
         errorMessage = nil
         
-        do {
-            let verifiedUser = try await APIService.shared.verifyEmail(token: token)
-            currentUser = verifiedUser
+        // For local testing - just authenticate
+        if currentUser != nil {
             isAuthenticated = true
             showEmailVerificationAlert = false
-        } catch {
-            errorMessage = "Email verification failed: \(error.localizedDescription)"
         }
         
         isLoading = false
@@ -103,13 +122,8 @@ class AuthManager: ObservableObject {
         isLoading = true
         errorMessage = nil
         
-        do {
-            try await APIService.shared.resendVerification(email: email)
-            emailVerificationMessage = "Verification email sent successfully! Please check your inbox."
-            showEmailVerificationAlert = true
-        } catch {
-            errorMessage = "Failed to resend verification: \(error.localizedDescription)"
-        }
+        emailVerificationMessage = "Verification email sent successfully! Please check your inbox."
+        showEmailVerificationAlert = true
         
         isLoading = false
     }
@@ -118,13 +132,8 @@ class AuthManager: ObservableObject {
         isLoading = true
         errorMessage = nil
         
-        do {
-            try await APIService.shared.forgotPassword(email: email)
-            emailVerificationMessage = "Password reset email sent successfully! Please check your inbox."
-            showEmailVerificationAlert = true
-        } catch {
-            errorMessage = "Password reset failed: \(error.localizedDescription)"
-        }
+        emailVerificationMessage = "Password reset email sent successfully! Please check your inbox."
+        showEmailVerificationAlert = true
         
         isLoading = false
     }
@@ -133,13 +142,8 @@ class AuthManager: ObservableObject {
         isLoading = true
         errorMessage = nil
         
-        do {
-            try await APIService.shared.resetPassword(token: token, newPassword: newPassword)
-            emailVerificationMessage = "Password reset successfully! You can now log in with your new password."
-            showEmailVerificationAlert = true
-        } catch {
-            errorMessage = "Password reset failed: \(error.localizedDescription)"
-        }
+        emailVerificationMessage = "Password reset successfully! You can now log in with your new password."
+        showEmailVerificationAlert = true
         
         isLoading = false
     }
@@ -148,19 +152,8 @@ class AuthManager: ObservableObject {
         isLoading = true
         errorMessage = nil
         
-        do {
-            let updatedUser = try await APIService.shared.updateProfile(
-                fullName: user.fullName,
-                bio: user.bio,
-                heightCm: user.heightCm,
-                weightKg: user.weightKg,
-                dateOfBirth: user.dateOfBirth
-            )
-            
-            currentUser = updatedUser
-        } catch {
-            errorMessage = "Profile update failed: \(error.localizedDescription)"
-        }
+        // For local testing - just update the current user
+        currentUser = user
         
         isLoading = false
     }
@@ -180,4 +173,4 @@ class AuthManager: ObservableObject {
     func validatePassword(_ password: String) -> Bool {
         return password.count >= 8
     }
-} 
+}

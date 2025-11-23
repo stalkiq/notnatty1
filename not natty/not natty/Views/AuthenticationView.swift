@@ -14,6 +14,7 @@ struct AuthenticationView: View {
     @State private var password = ""
     @State private var username = ""
     @State private var fullName = ""
+    
     @State private var showForgotPassword = false
     
     var body: some View {
@@ -85,6 +86,8 @@ struct AuthenticationView: View {
                             }
                             .padding(.horizontal)
                             
+                            // Invite code removed
+
                             // Action Button
                             Button(action: {
                                 Task {
@@ -168,9 +171,6 @@ struct AuthenticationView: View {
                 }
             }
         }
-        .sheet(isPresented: $showForgotPassword) {
-            ForgotPasswordView()
-        }
         .alert("Email Verification", isPresented: $authManager.showEmailVerificationAlert) {
             Button("OK") {
                 authManager.showEmailVerificationAlert = false
@@ -188,77 +188,6 @@ struct AuthenticationView: View {
                    authManager.validateEmail(email) && 
                    authManager.validateUsername(username) && 
                    authManager.validatePassword(password)
-        }
-    }
-}
-
-struct ForgotPasswordView: View {
-    @Environment(\.dismiss) var dismiss
-    @EnvironmentObject var authManager: AuthManager
-    @State private var email = ""
-    
-    var body: some View {
-        NavigationView {
-            VStack(spacing: 30) {
-                VStack(spacing: 15) {
-                    Image(systemName: "lock.rotation")
-                        .font(.system(size: 60))
-                        .foregroundColor(.orange)
-                    
-                    Text("Reset Password")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                    
-                    Text("Enter your email address and we'll send you a link to reset your password.")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-                
-                VStack(spacing: 20) {
-                    TextField("Email", text: $email)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .keyboardType(.emailAddress)
-                        .autocapitalization(.none)
-                    
-                    Button(action: {
-                        Task {
-                            await authManager.forgotPassword(email: email)
-                            dismiss()
-                        }
-                    }) {
-                        HStack {
-                            if authManager.isLoading {
-                                ProgressView()
-                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                    .scaleEffect(0.8)
-                            } else {
-                                Text("Send Reset Link")
-                                    .fontWeight(.semibold)
-                            }
-                        }
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 50)
-                        .background(Color.orange)
-                        .foregroundColor(.white)
-                        .cornerRadius(25)
-                    }
-                    .disabled(authManager.isLoading || !authManager.validateEmail(email))
-                    .opacity(authManager.validateEmail(email) ? 1.0 : 0.6)
-                }
-                
-                Spacer()
-            }
-            .padding()
-            .navigationTitle("Forgot Password")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
-            }
         }
     }
 }

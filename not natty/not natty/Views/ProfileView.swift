@@ -42,7 +42,7 @@ struct ProfileView: View {
                 // Tab Selector
                 Picker("Profile Tabs", selection: $selectedTab) {
                     Text("Posts").tag(0)
-                    Text("Cycles").tag(1)
+                    Text("Supplements").tag(1)
                     Text("Stats").tag(2)
                 }
                 .pickerStyle(SegmentedPickerStyle())
@@ -115,11 +115,9 @@ struct ProfileHeaderView: View {
             }
             
             // Stats
-            HStack(spacing: 40) {
+            HStack(spacing: 16) {
                 StatItem(title: "Posts", value: "\(postsManager.posts.filter { $0.userId == authManager.currentUser?.id }.count)")
                 StatItem(title: "Cycles", value: "\(cyclesManager.cycles.count)")
-                StatItem(title: "Following", value: "0") // TODO: Implement following count
-                StatItem(title: "Followers", value: "0") // TODO: Implement followers count
             }
             
             // Physical Stats (if available)
@@ -359,6 +357,28 @@ struct ProfileStatsTab: View {
     }
 }
 
+// MARK: - Social Tab (Feed + Influencers)
+// struct ProfileSocialTab: View {
+//     var body: some View {
+//         NavigationView {
+//             List {
+//                 Section("Feed") {
+//                     NavigationLink(destination: HomeFeedView()) {
+//                         HStack { Image(systemName: "house.fill"); Text("Open Social Feed") }
+//                     }
+//                 }
+//                 Section("Verified Creators") {
+//                     NavigationLink(destination: VerifiedProfilesView()) {
+//                         HStack { Image(systemName: "checkmark.seal.fill"); Text("Explore Verified Creators") }
+//                     }
+//                 }
+//             }
+//             .listStyle(InsetGroupedListStyle())
+//             .navigationTitle("Social")
+//         }
+//     }
+// }
+
 struct ActivityStatsCard: View {
     @EnvironmentObject var postsManager: PostsManager
     @EnvironmentObject var authManager: AuthManager
@@ -490,6 +510,8 @@ struct SettingsView: View {
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var authManager: AuthManager
     @EnvironmentObject var themeManager: ThemeManager
+    @State private var showInviteAlert = false
+    @State private var generatedCode = ""
     
     var body: some View {
         NavigationView {
@@ -570,6 +592,7 @@ struct SettingsView: View {
                 }
             }
         }
+        // Invite code alert removed
     }
 }
 
@@ -630,7 +653,7 @@ struct EditProfileView: View {
                         TextField("Weight", text: $weightKg)
                             .keyboardType(.decimalPad)
                         Text("kg")
-                            .foregroundColor(.secondary)
+                    .foregroundColor(.secondary)
                     }
                 }
                 
@@ -724,10 +747,10 @@ struct PrivacySettingsView: View {
             }
         }
         .navigationTitle("Privacy Settings")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button("Done") {
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
                     dismiss()
                 }
             }
