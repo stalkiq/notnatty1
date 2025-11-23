@@ -1,0 +1,9 @@
+# Node / CDK build artifacts
+node_modules/
+cdk.out/
+dist/
+.env
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
