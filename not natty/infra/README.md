@@ -35,12 +35,15 @@ or
 AWS_PROFILE=your-profile cdk deploy
 ```
 
+### Outputs
+- `MediaBucketName` and `MediaBucketArn` will be printed after deploy.
+  - Access pattern: generate presigned PUT/GET URLs from a Lambda (to be added next).
+
 ## Next Steps (will be added incrementally)
-1) S3 media bucket (private, presigned uploads/downloads)  
-2) DynamoDB tables (users, posts, cycles, intakes)  
-3) API Gateway + Lambda (REST)  
-4) Cognito User Pool (auth)  
-5) Notifications/Reminders (EventBridge + SNS)  
+1) DynamoDB tables (users, posts, cycles, intakes)  
+2) API Gateway + Lambda (REST)  
+3) Cognito User Pool (auth)  
+4) Notifications/Reminders (EventBridge + SNS)  
 
 Resources will be added to `lib/not-natty-stack.ts` in small, reviewable increments.
 
