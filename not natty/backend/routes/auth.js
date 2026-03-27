@@ -1,3 +1,4 @@
+```
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -45,7 +46,7 @@ router.post('/register', validateRegistration, async (req, res) => {
     // Generate JWT token
     const token = jwt.sign(
       { userId: user.id, email: user.email },
-      process.env.JWT_SECRET,
+      process.env.JWT_SECRET_KEY,
       { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
     );
 
@@ -120,7 +121,7 @@ router.post('/login', validateLogin, async (req, res) => {
     // Generate JWT token
     const token = jwt.sign(
       { userId: user.id, email: user.email },
-      process.env.JWT_SECRET,
+      process.env.JWT_SECRET_KEY,
       { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
     );
 
@@ -239,7 +240,7 @@ router.post('/reset-password', async (req, res) => {
   try {
     const { token, newPassword } = req.body;
 
-    if (!token || !newPassword) {
+    if (!token ||!newPassword) {
       return res.status(400).json({
         error: 'Missing required fields',
         message: 'Token and new password are required'
@@ -261,3 +262,4 @@ router.post('/reset-password', async (req, res) => {
 });
 
 module.exports = router; 
+```
